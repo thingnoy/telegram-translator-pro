@@ -1,19 +1,20 @@
 # 🌐 Telegram Translator Pro
 
-Advanced real-time translation userscript for Telegram Web with intelligent caching, virtual scrolling support, and data-mid persistence.
+Advanced real-time translation userscript for Telegram Web with beautiful Liquid Glass UI, intelligent caching, and instant language switching.
+
+![Telegram Translator Pro Screenshot](screenshot.png)
 
 ## ✨ Features
 
-- **Real-time Translation**: Automatically translates messages as they appear
-- **Smart Caching**: Dual-layer cache system (API + Persistent) for optimal performance
-- **Language Auto-detection**: Automatically detects source language
-- **Virtual Scrolling Support**: Works seamlessly with Telegram's virtual scrolling
-- **Message ID Tracking**: Uses Telegram's data-mid for reliable cache persistence
-- **Customizable Settings**: Full control over translation behavior
-- **Elegant UI**: Beautiful gradient-based control panel
-- **Keyboard Shortcuts**: Quick access with Alt+T and Alt+R
-- **Skip Same Language**: Option to skip translation if already in target language
-- **Debug Mode**: Built-in debugging for troubleshooting
+- **🌊 Liquid Glass UI**: Beautiful iOS-style frosted glass design with smooth animations
+- **⚡ Instant Language Switch**: Automatically retranslates all messages when changing language
+- **🎯 Real-time Translation**: Automatically translates messages as they appear
+- **💾 Smart Caching**: Dual-layer cache system with language-specific persistence
+- **🔍 Auto-detection**: Automatically detects source language
+- **🎨 Minimalist Design**: Clean, bold interface that's easy to understand
+- **⌨️ Keyboard Shortcuts**: Quick access with Alt+T
+- **📊 Live Statistics**: See translated and cached message counts in real-time
+- **🚀 Optimized Performance**: Intelligent caching prevents redundant API calls
 
 ## 🚀 Installation
 
@@ -32,30 +33,35 @@ Advanced real-time translation userscript for Telegram Web with intelligent cach
 
 ### Opening the Control Panel
 
-- Click the floating **💬** button in the bottom-right corner
+- Click the floating **🌐** button in the bottom-right corner
 - Or press **Alt+T** on your keyboard
+
+### Quick Start
+
+1. **Toggle Translation**: Click the big toggle switch to enable/disable translation
+2. **Choose Language**: Select your target language from the dropdown (🌍)
+3. **That's it!**: Messages will be automatically translated as they appear
 
 ### Settings
 
-| Setting | Description |
+The interface is intentionally minimal with only essential controls:
+
+| Control | Description |
 |---------|-------------|
-| **Enable Translation** | Toggle translation on/off |
-| **Target Language** | Language to translate messages into |
-| **Source Language** | Source language (or auto-detect) |
-| **Skip Same Language** | Don't translate if already in target language |
-| **Debug Mode** | Enable console logging for troubleshooting |
-| **Minimum Text Length** | Minimum characters required to trigger translation |
+| **Main Toggle** | Turn translation on/off for all messages |
+| **Target Language** | Choose which language to translate into |
+| **Statistics** | View translated and saved (cached) message counts |
+
+**Note**: Source language is automatically detected, and same-language messages are automatically skipped for optimal performance.
 
 ### Keyboard Shortcuts
 
 - **Alt+T**: Toggle translator panel
-- **Alt+R**: Refresh all translations
 - **Esc**: Close panel
 
-### Buttons
+### Auto-Refresh on Language Change
 
-- **Clear Cache**: Remove all cached translations
-- **Refresh All**: Re-translate all visible messages
+When you change the target language, all visible messages are **automatically retranslated** to the new language instantly!
 
 ## 🌍 Supported Languages
 
@@ -65,25 +71,25 @@ Arabic, Chinese (Simplified/Traditional), Czech, Dutch, English, Finnish, French
 
 The script stores settings in `localStorage`:
 - `tg_enabled`: Translation enabled state
-- `tg_target_lang`: Target language code
-- `tg_source_lang`: Source language code
-- `tg_skip_same_lang`: Skip same language option
-- `tg_debug_mode`: Debug mode state
-- `tg_min_length`: Minimum text length
+- `tg_target_lang`: Target language code (user-selectable)
+- `tg_source_lang`: Always set to "auto" (auto-detection)
+- `tg_skip_same_lang`: Always enabled (auto-skip same language)
+- `tg_translation_cache`: Persistent cache with format `messageId:targetLang` for language-specific caching
 
 ## 🐛 Troubleshooting
 
 ### Translations not appearing?
 
-1. Enable **Debug Mode** in settings
-2. Open browser console (F12)
-3. Check for error messages
-4. Click **Refresh All** button
+1. Open browser console (F12) - Debug mode is enabled by default
+2. Check for error messages with `[Translator]` prefix
+3. Make sure translation is enabled (toggle switch is on)
+4. Try disabling and re-enabling the toggle
 
-### Cache issues?
+### Language change not working?
 
-1. Click **Clear Cache** button
-2. Click **Refresh All** to re-translate
+- The script automatically retranslates all messages when you change language
+- If translations don't update, try toggling translation off and on again
+- Check browser console for any errors
 
 ### Script not loading?
 
@@ -96,12 +102,14 @@ The script stores settings in `localStorage`:
 
 ### Architecture
 
+- **Liquid Glass UI**: CSS backdrop-filter with 20px blur and translucent backgrounds for frosted glass effect
 - **Message Detection**: Uses multiple selectors to find Telegram message containers
 - **ID System**: Leverages Telegram's `data-mid` attributes for persistent caching
+- **Language-Specific Cache**: Cache keys include target language (`messageId:targetLang`) for multi-language support
 - **Translation Engine**: Google Translate API via `GM_xmlhttpRequest`
 - **Request Queue**: Manages concurrent API requests (max 3 simultaneous)
 - **Mutation Observer**: Detects new messages in real-time
-- **Debouncing**: Prevents excessive processing during rapid scrolling
+- **Auto-Refresh**: Automatically retranslates all messages when language changes
 
 ### Performance Features
 
@@ -130,12 +138,9 @@ CONFIG = {
 
 ## 📊 Statistics
 
-The panel displays real-time statistics:
-- **Translated**: Number of new translations
-- **API Cache**: Cached API responses
-- **Persist Cache**: Messages cached with data-mid
-- **Errors**: Failed translation attempts
-- **Skipped**: Messages skipped (too short, same language, etc.)
+The panel displays real-time statistics in a compact inline format:
+- **Translated**: Total number of messages translated in current session
+- **Saved**: Total number of translations cached in localStorage (across all languages)
 
 ## 🤝 Contributing
 
@@ -157,27 +162,28 @@ MIT License - See [LICENSE](LICENSE) file for details
 
 ## 📝 Changelog
 
+### Version 3.0 - Liquid Glass (Current)
+- 🌊 Complete redesign with beautiful Liquid Glass UI (iOS-style frosted glass effect)
+- ⚡ Instant language switching - automatically retranslates all messages when language changes
+- 💾 Language-specific persistent cache (`messageId:targetLang` format)
+- 🎨 Minimalist interface with only essential controls
+- 📊 Compact inline statistics display
+- 🔧 Auto-enabled features: source language detection, skip same language
+- 🎯 Removed unnecessary features for cleaner UX
+- 🚀 Optimized blur (20px) for better clarity and performance
+- ✨ Brighter cyan color scheme (#00d4ff) for better visibility
+
+### Version 2.0 - iOS Glass Style
+- Complete UI redesign with modern dark gradient theme
+- Improved animations and transitions
+- Enhanced visual hierarchy
+
 ### Version 1.4
 - Fixed Telegram Web K structure detection
 - Improved data-mid caching system
 - Enhanced virtual scrolling support
 - Better message ID tracking
 - Optimized performance
-
-### Version 1.3
-- Added persistent cache with data-mid
-- Improved statistics display
-- Enhanced UI design
-
-### Version 1.2
-- Added skip same language option
-- Improved debug mode
-- Enhanced error handling
-
-### Version 1.1
-- Initial public release
-- Basic translation functionality
-- Cache system implementation
 
 ---
 

@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         🌐 Telegram Translator Pro by sadoi
 // @namespace    sadoi
-// @version      2.0
-// @description  Clean & minimal Telegram Web translator with smart caching and data-mid tracking. Developed by sadoi
+// @version      3.0
+// @description  Liquid Glass UI Telegram Web translator with smart caching. Developed by sadoi
 // @author       sadoi
 // @match        https://web.telegram.org/k/*
 // @license      MIT
@@ -53,308 +53,404 @@
 
   waitForDOM().then(() => {
     log.info(
-      "✨ DOM ready, initializing Telegram Translator Pro v2.0 (Clean UI)"
+      "✨ DOM ready, initializing Telegram Translator Pro v3.0 (Liquid Glass)"
     );
     initializeScript();
   });
 
   function initializeScript() {
-    // 💠 iOS Glass Style
+    // 🌊 Liquid Glass UI Style
     GM_addStyle(`
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* Floating Button - Liquid Glass */
     #tg-panel-toggle {
-      position: fixed !important;
-      right: 24px !important;
-      bottom: 24px !important;
-      width: 60px !important;
-      height: 60px !important;
-      border-radius: 20px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      font-size: 30px !important;
-      background: rgba(255, 255, 255, 0.8) !important;
-      color: #007AFF !important;
-      box-shadow: 0 8px 32px rgba(0, 122, 255, 0.2), 
-                  0 2px 8px rgba(0, 0, 0, 0.08) !important;
-      cursor: pointer !important;
-      z-index: 2147483647 !important;
-      backdrop-filter: blur(20px) saturate(180%) !important;
-      -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-      border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    }
-    #tg-panel-toggle:hover { 
-      transform: scale(1.05) !important;
-      box-shadow: 0 12px 48px rgba(0, 122, 255, 0.3), 
-                  0 4px 12px rgba(0, 0, 0, 0.12) !important;
-    }
-    #tg-panel-toggle:active {
-      transform: scale(0.95) !important;
-    }
-    
-    #tg-panel {
-      position: fixed !important;
-      right: 24px !important;
-      bottom: 24px !important;
-      width: 320px;
-      max-height: 80vh;
-      overflow-y: auto;
-      background: rgba(255, 255, 255, 0.7) !important;
-      backdrop-filter: blur(40px) saturate(180%) !important;
-      -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
-      border-radius: 20px;
-      color: #1d1d1f;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15),
-                  0 0 0 0.5px rgba(255, 255, 255, 0.8) inset;
-      padding: 20px;
-      display: none;
-      border: 0.5px solid rgba(255, 255, 255, 0.8);
-      z-index: 2147483647 !important;
-      opacity: 0;
-      transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    #tg-panel.show {
-      opacity: 1;
-    }
-    
-    #tg-close-btn {
-      position: absolute;
-      top: 12px;
+      position: fixed;
       right: 12px;
-      width: 28px;
-      height: 28px;
-      border-radius: 14px;
-      background: rgba(120, 120, 128, 0.16);
+      bottom: 64px;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
-      color: #1d1d1f;
+      font-size: 20px;
+      background: linear-gradient(135deg,
+        rgba(0, 212, 255, 0.9),
+        rgba(0, 153, 255, 0.9));
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      color: white;
+      border: 1.5px solid rgba(255, 255, 255, 0.25);
+      box-shadow:
+        0 8px 32px rgba(0, 212, 255, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
       cursor: pointer;
-      transition: all 0.2s ease;
-      border: none;
-      font-weight: 500;
+      z-index: 2147483647;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    #tg-close-btn:hover { 
-      background: rgba(120, 120, 128, 0.24);
-      transform: scale(1.1);
+    #tg-panel-toggle:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 12px 40px rgba(0, 212, 255, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      background: linear-gradient(135deg,
+        rgba(0, 229, 255, 0.95),
+        rgba(0, 170, 255, 0.95));
     }
-    #tg-close-btn:active {
+    #tg-panel-toggle:active {
       transform: scale(0.95);
     }
-    
-    #tg-panel h3 {
-      margin: 0 0 20px 0;
-      padding-bottom: 12px;
-      text-align: center;
-      color: #1d1d1f;
-      font-weight: 600;
-      letter-spacing: -0.3px;
-      font-size: 20px;
-      border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
-    }
-    
-    .tg-row { 
-      display: flex; 
-      flex-direction: column; 
-      gap: 6px; 
-      margin: 16px 0; 
-    }
-    
-    .tg-label {
-      font-size: 13px;
-      color: #86868b;
-      font-weight: 500;
-      letter-spacing: -0.08px;
-      text-transform: uppercase;
-      font-size: 11px;
-    }
-    
-    .tg-select, .tg-input {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: rgba(120, 120, 128, 0.12);
-      border: none;
-      color: #1d1d1f;
-      font-size: 15px;
-      outline: none;
-      transition: all 0.2s ease;
-      font-weight: 400;
-      -webkit-appearance: none;
-    }
-    .tg-select:focus, .tg-input:focus { 
-      background: rgba(120, 120, 128, 0.16);
-      box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
-    }
-    .tg-select option { 
-      background: white; 
-      color: #1d1d1f; 
-    }
-    
-    .tg-btn {
-      width: 100%;
-      padding: 12px;
-      margin-top: 8px;
-      border-radius: 12px;
-      background: rgba(120, 120, 128, 0.12);
-      border: none;
-      cursor: pointer;
-      color: #1d1d1f;
-      font-size: 15px;
-      font-weight: 500;
-      transition: all 0.2s ease;
-    }
-    .tg-btn:hover { 
-      background: rgba(120, 120, 128, 0.16);
-      transform: translateY(-1px);
-    }
-    .tg-btn:active {
-      transform: scale(0.98);
-    }
-    .tg-btn:disabled { 
-      opacity: 0.4; 
-      cursor: not-allowed; 
-    }
-    .tg-btn.positive { 
-      background: #007AFF;
+
+    /* Main Panel - Liquid Glass */
+    #tg-panel {
+      position: fixed !important;
+      right: 20px !important;
+      bottom: 20px !important;
+      width: 320px;
+      max-height: 85vh;
+      overflow-y: auto;
+      background: linear-gradient(145deg,
+        rgba(25, 30, 40, 0.3),
+        rgba(18, 22, 32, 0.3)) !important;
+      backdrop-filter: blur(14px) saturate(150%) !important;
+      -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+      border-radius: 20px;
       color: white;
-      font-weight: 600;
-      box-shadow: 0 2px 8px rgba(0, 122, 255, 0.25);
+      box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.12) inset,
+        0 2px 4px rgba(255, 255, 255, 0.08) inset;
+      padding: 48px 20px 20px 20px;
+      display: none;
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      z-index: 2147483647 !important;
+      opacity: 0;
+      transform: scale(0.95) translateY(10px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .tg-btn.positive:hover {
-      background: #0051D5;
-      box-shadow: 0 4px 12px rgba(0, 122, 255, 0.35);
-      transform: translateY(-2px);
+    #tg-panel.show {
+      opacity: 1;
+      transform: scale(1) translateY(0);
     }
-    .tg-btn.positive:active {
-      transform: scale(0.98);
+
+    /* Close Button - Glass */
+    #tg-close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      z-index: 10;
+      font-weight: 300;
+      line-height: 1;
     }
-    
-    .tg-stats {
-      margin-top: 20px;
-      padding: 16px;
-      background: rgba(120, 120, 128, 0.08);
-      border-radius: 16px;
-      font-size: 11px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      border: 0.5px solid rgba(0, 0, 0, 0.04);
+    #tg-close-btn:hover {
+      background: rgba(255, 59, 48, 0.25);
+      color: #ff6b6b;
+      border-color: rgba(255, 59, 48, 0.4);
+      backdrop-filter: blur(15px);
     }
-    .tg-stat-item { 
-      text-align: center;
-      padding: 12px 8px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.5);
+    #tg-close-btn:active {
+      transform: scale(0.9);
     }
-    .tg-stat-item:last-child {
-      grid-column: span 2;
+
+    /* Main Toggle - Compact */
+    .tg-main-toggle {
+      margin-bottom: 20px;
     }
-    .tg-stat-value {
-      color: #007AFF;
+
+    .tg-toggle-info {
+      flex: 1;
+    }
+
+    .tg-toggle-title {
+      display: block;
+      font-size: 16px;
       font-weight: 700;
-      font-size: 24px;
-      letter-spacing: -0.5px;
+      color: white;
+      margin-bottom: 2px;
+      letter-spacing: -0.3px;
     }
-    .tg-stat-label {
-      color: #86868b;
-      font-size: 11px;
-      margin-top: 4px;
+
+    .tg-toggle-subtitle {
+      display: block;
+      font-size: 12px;
+      color: #666;
       font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
-    
-    .tg-footer {
-      margin-top: 20px;
-      padding-top: 16px;
-      text-align: center;
-      font-size: 11px;
-      color: #86868b;
-      border-top: 0.5px solid rgba(0, 0, 0, 0.08);
+
+    /* Sections - Compact Spacing */
+    .tg-section {
+      margin-bottom: 20px;
     }
-    .tg-footer > div:first-child { 
-      color: #1d1d1f;
-      font-weight: 600;
-      margin-bottom: 4px;
-      font-size: 13px;
-    }
-    
-    .tg-translated-text {
-      margin-top: 12px;
-      padding: 12px 16px;
-      color: #1d1d1f;
-      font-size: 15px;
-      background: rgba(0, 122, 255, 0.08);
-      border-left: 3px solid #007AFF;
-      border-radius: 12px;
-      font-weight: 400;
-      line-height: 1.4;
-      animation: fadeInSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    @keyframes fadeInSlide {
-      from { 
-        opacity: 0; 
-        transform: translateY(-8px);
-      }
-      to { 
-        opacity: 1; 
-        transform: translateY(0);
-      }
-    }
-    
-    .tg-checkbox-container {
+
+    /* Language Picker - Glass */
+    .tg-lang-picker {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 12px 14px;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
       border-radius: 12px;
-      background: rgba(120, 120, 128, 0.12);
-      transition: all 0.2s ease;
-      cursor: pointer;
+      transition: all 0.3s ease;
     }
-    .tg-checkbox-container:hover {
-      background: rgba(120, 120, 128, 0.16);
+    .tg-lang-picker:hover {
+      border-color: rgba(0, 212, 255, 0.5);
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 4px 20px rgba(0, 212, 255, 0.2);
     }
-    .tg-checkbox-container input[type="checkbox"] {
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-      accent-color: #007AFF;
+
+    .tg-lang-icon {
+      font-size: 28px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
     }
-    .tg-checkbox-container label {
-      cursor: pointer;
+
+    .tg-lang-content {
+      flex: 1;
+    }
+
+    /* Labels - Clean */
+    .tg-label {
+      font-size: 11px;
+      color: #666;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Dropdowns - Compact */
+    .tg-select {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      background: transparent;
+      border: none;
+      color: white;
       font-size: 15px;
-      color: #1d1d1f;
-      font-weight: 400;
-    }
-    
-    .tg-debug-toggle {
+      font-weight: 600;
+      outline: none;
+      transition: all 0.2s ease;
+      -webkit-appearance: none;
       cursor: pointer;
-      opacity: 0.5;
-      transition: opacity 0.2s;
+    }
+    .tg-select option {
+      background: #1a1a1a;
+      color: white;
+      font-weight: 500;
+      padding: 10px;
+    }
+
+    /* Toggle Switch - Liquid Glass */
+    .tg-toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      transition: all 0.3s ease;
+      cursor: pointer;
       user-select: none;
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 6px;
     }
-    .tg-debug-toggle:hover {
-      opacity: 0.8;
-      background: rgba(120, 120, 128, 0.08);
+    .tg-toggle-container:hover {
+      border-color: rgba(0, 212, 255, 0.5);
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 4px 20px rgba(0, 212, 255, 0.15);
     }
-    .tg-debug-toggle:active {
-      transform: scale(0.95);
+    .tg-toggle-container:active {
+      transform: scale(0.98);
     }
-    
-    @keyframes slideInTop {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
+
+    /* Hide default checkbox */
+    .tg-toggle-input {
+      display: none;
     }
-    @keyframes fadeOut { 
-      to { opacity: 0; }
+
+    /* Toggle Switch - Glass */
+    .tg-toggle-switch {
+      position: relative;
+      width: 50px;
+      height: 28px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      flex-shrink: 0;
+      box-shadow:
+        inset 0 2px 6px rgba(0, 0, 0, 0.2),
+        0 1px 2px rgba(255, 255, 255, 0.1);
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
     }
-    
+
+    /* Toggle Slider - Glass */
+    .tg-toggle-slider {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(145deg,
+        rgba(255, 255, 255, 0.9),
+        rgba(230, 230, 230, 0.9));
+      border-radius: 50%;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    /* Checked State - Glowing */
+    .tg-toggle-input:checked + .tg-toggle-switch {
+      background: linear-gradient(135deg,
+        rgba(0, 212, 255, 0.3),
+        rgba(0, 153, 255, 0.3));
+      box-shadow:
+        0 0 20px rgba(0, 212, 255, 0.5),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2);
+      border-color: rgba(0, 212, 255, 0.6);
+    }
+
+    .tg-toggle-input:checked + .tg-toggle-switch .tg-toggle-slider {
+      left: 24px;
+      background: linear-gradient(145deg,
+        rgba(255, 255, 255, 1),
+        rgba(255, 255, 255, 0.95));
+      box-shadow:
+        0 2px 8px rgba(0, 212, 255, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+
+    /* Active State */
+    .tg-toggle-input:checked ~ .tg-toggle-info .tg-toggle-title {
+      color: #00d4ff;
+      text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+    }
+
+    /* Button - Simple & Clean */
+    .tg-btn.positive {
+      width: 100%;
+      padding: 14px;
+      border-radius: 8px;
+      background: #0088cc;
+      color: white;
+      font-weight: 600;
+      font-size: 15px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      margin-top: 16px;
+    }
+    .tg-btn.positive:hover {
+      background: #0099dd;
+    }
+    .tg-btn.positive:active {
+      background: #0077bb;
+    }
+
+    /* Bottom Section - Stats + Version */
+    .tg-bottom {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #1a1a1a;
+    }
+
+    /* Stats - Liquid Glass */
+    .tg-stats-inline {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: rgba(0, 212, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border: 1.5px solid rgba(0, 212, 255, 0.3);
+      border-radius: 10px;
+      box-shadow:
+        0 4px 16px rgba(0, 212, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .tg-stat-item {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+    }
+
+    .tg-stat-value {
+      color: #00d4ff;
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.5px;
+      text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+    }
+
+    .tg-stat-label {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .tg-stat-divider {
+      color: rgba(0, 136, 204, 0.4);
+      font-size: 12px;
+    }
+
+    /* Version Info */
+    .tg-version {
+      text-align: center;
+      margin-top: 12px;
+      color: #444;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    /* Translation Display - Liquid Glass */
+    .tg-translated-text {
+      margin-top: 8px;
+      padding: 10px 12px;
+      color: #00d4ff;
+      font-size: 14px;
+      background: linear-gradient(135deg,
+        rgba(0, 212, 255, 0.15),
+        rgba(0, 153, 255, 0.1));
+      backdrop-filter: blur(12px);
+      border-left: 3px solid #00d4ff;
+      border-radius: 8px;
+      font-weight: 600;
+      line-height: 1.4;
+      border: 1.5px solid rgba(0, 212, 255, 0.3);
+      box-shadow:
+        0 4px 12px rgba(0, 212, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      text-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+    }
+
+    /* Scrollbar - Minimal */
     #tg-panel::-webkit-scrollbar {
       width: 6px;
     }
@@ -362,11 +458,11 @@
       background: transparent;
     }
     #tg-panel::-webkit-scrollbar-thumb {
-      background: rgba(120, 120, 128, 0.3);
+      background: #2a2a2a;
       border-radius: 10px;
     }
     #tg-panel::-webkit-scrollbar-thumb:hover {
-      background: rgba(120, 120, 128, 0.5);
+      background: #444;
     }
   `);
 
@@ -410,67 +506,55 @@
     document.body.insertAdjacentHTML(
       "beforeend",
       `
-    <div id="tg-panel-toggle" title="Open Translator (Alt+T)">💬</div>
-    <div id="tg-panel" role="dialog" aria-label="Translator Pro">
+    <div id="tg-panel-toggle" title="Open Translator (Alt+T)">🌐</div>
+    <div id="tg-panel" role="dialog" aria-label="Translator">
       <div id="tg-close-btn" title="Close (Esc)">×</div>
-      <h3>✨ Translator Pro ✨</h3>
-      
-      <div class="tg-row">
-        <label class="tg-checkbox-container">
-          <input type="checkbox" id="tg-enabled">
-          <label for="tg-enabled">Enable Auto-Translate</label>
+
+      <!-- BIG Toggle - Main Action -->
+      <div class="tg-main-toggle">
+        <label class="tg-toggle-container" for="tg-enabled">
+          <div class="tg-toggle-info">
+            <span class="tg-toggle-title">Translate Messages</span>
+            <span class="tg-toggle-subtitle">Auto translate all chats</span>
+          </div>
+          <input type="checkbox" id="tg-enabled" class="tg-toggle-input">
+          <div class="tg-toggle-switch">
+            <div class="tg-toggle-slider"></div>
+          </div>
         </label>
       </div>
-      
-      <div class="tg-row">
-        <label class="tg-label">Translate to:</label>
-        <select id="tg-lang-select" class="tg-select">${langOptions}</select>
-      </div>
-      
-      <div class="tg-row">
-        <label class="tg-label">Detect from:</label>
-        <select id="tg-source-lang-select" class="tg-select">${sourceOptions}</select>
-      </div>
-      
-      <div class="tg-row">
-        <label class="tg-checkbox-container">
-          <input type="checkbox" id="tg-skip-same-lang">
-          <label for="tg-skip-same-lang">Skip same language</label>
-        </label>
-      </div>
-      
-      <button id="tg-refresh-btn" class="tg-btn positive">⚡ Refresh All</button>
-      
-      <div class="tg-stats">
-        <div class="tg-stat-item">
-          <div class="tg-stat-value" id="tg-stat-translated">0</div>
-          <div class="tg-stat-label">Translated</div>
-        </div>
-        <div class="tg-stat-item">
-          <div class="tg-stat-value" id="tg-stat-cached">0</div>
-          <div class="tg-stat-label">API Cache</div>
-        </div>
-        <div class="tg-stat-item">
-          <div class="tg-stat-value" id="tg-stat-persist">0</div>
-          <div class="tg-stat-label">Saved</div>
-        </div>
-        <div class="tg-stat-item">
-          <div class="tg-stat-value" id="tg-stat-errors">0</div>
-          <div class="tg-stat-label">Errors</div>
-        </div>
-        <div class="tg-stat-item">
-          <div class="tg-stat-value" id="tg-stat-skipped">0</div>
-          <div class="tg-stat-label">Skipped</div>
+
+      <!-- Simple Language Picker -->
+      <div class="tg-section">
+        <div class="tg-lang-picker">
+          <div class="tg-lang-icon">🌍</div>
+          <div class="tg-lang-content">
+            <label class="tg-label">Translate to</label>
+            <select id="tg-lang-select" class="tg-select">${langOptions}</select>
+          </div>
         </div>
       </div>
-      
-      <div class="tg-footer">
-        <div>🚀 by sadoi</div>
-        <div style="margin-top: 2px;">v2.0 Clean • Alt+T • Alt+R</div>
-        <div class="tg-debug-toggle" id="tg-debug-toggle" title="Click to toggle debug mode">
-          <span style="font-size: 6px;">🐛 <span id="tg-debug-status">ON</span></span>
+
+      <!-- Stats & Footer - Combined -->
+      <div class="tg-bottom">
+        <div class="tg-stats-inline">
+          <div class="tg-stat-item">
+            <span class="tg-stat-value" id="tg-stat-translated">0</span>
+            <span class="tg-stat-label">translated</span>
+          </div>
+          <div class="tg-stat-divider">•</div>
+          <div class="tg-stat-item">
+            <span class="tg-stat-value" id="tg-stat-persist">0</span>
+            <span class="tg-stat-label">saved</span>
+          </div>
         </div>
+        <div class="tg-version">v3.0 Liquid Glass • Press Alt+T</div>
       </div>
+
+      <!-- Hidden Advanced -->
+      <input type="checkbox" id="tg-skip-same-lang" style="display:none">
+      <select id="tg-source-lang-select" style="display:none">${sourceOptions}</select>
+      <button id="tg-refresh-btn" style="display:none"></button>
     </div>
   `
     );
@@ -487,15 +571,12 @@
       sourceLangSelect: $("tg-source-lang-select"),
       enableInput: $("tg-enabled"),
       skipSameLangInput: $("tg-skip-same-lang"),
-      debugToggle: $("tg-debug-toggle"),
-      debugStatus: $("tg-debug-status"),
       refreshBtn: $("tg-refresh-btn"),
       stats: {
         translated: $("tg-stat-translated"),
         cached: $("tg-stat-cached"),
         persist: $("tg-stat-persist"),
         errors: $("tg-stat-errors"),
-        skipped: $("tg-stat-skipped"),
       },
     };
 
@@ -525,10 +606,48 @@
     elements.sourceLangSelect.value = state.sourceLang;
     elements.enableInput.checked = state.enabled;
     elements.skipSameLangInput.checked = state.skipSameLang;
-    elements.debugStatus.textContent = DEBUG ? "ON" : "OFF";
 
-    // 📊 Stats Update
-    const translationPersistCache = new Map();
+    // 📊 Stats Update & Persistent Cache with localStorage
+    const CACHE_KEY = "tg_translation_cache";
+    const MAX_CACHE_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+    // Load cache from localStorage
+    const loadPersistCache = () => {
+      try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (!cached) return new Map();
+
+        const parsed = JSON.parse(cached);
+        const now = Date.now();
+        const filtered = Object.entries(parsed)
+          .filter(([_, data]) => now - data.timestamp < MAX_CACHE_AGE)
+          .map(([id, data]) => [id, data.text]);
+
+        return new Map(filtered);
+      } catch (e) {
+        log.error("Failed to load cache:", e);
+        return new Map();
+      }
+    };
+
+    // Save cache to localStorage
+    const savePersistCache = (cache) => {
+      try {
+        const now = Date.now();
+        const obj = Object.fromEntries(
+          Array.from(cache.entries()).map(([id, text]) => [
+            id,
+            { text, timestamp: now },
+          ])
+        );
+        localStorage.setItem(CACHE_KEY, JSON.stringify(obj));
+      } catch (e) {
+        log.error("Failed to save cache:", e);
+      }
+    };
+
+    const translationPersistCache = loadPersistCache();
+    log.info(`✓ Loaded ${translationPersistCache.size} cached translations`);
 
     const updateStats = () => {
       Object.entries(state.stats).forEach(([key, value]) => {
@@ -542,24 +661,10 @@
     };
     updateStats();
 
-    // 🔔 Notification
+    // 🔔 Notification - Disabled (too distracting)
     const showNotification = (message) => {
-      const notification = document.createElement("div");
-      notification.textContent = message;
-      notification.style.cssText = `
-      position: fixed; top: 24px; right: 24px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white; padding: 14px 24px; border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
-      z-index: 2147483648;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 14px; font-weight: 600;
-      animation: slideInTop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), fadeOut 0.3s ease 2.7s;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    `;
-      document.body.appendChild(notification);
-      setTimeout(() => notification.remove(), 3000);
+      // Notifications disabled - only log to console
+      log.info("Notification:", message);
     };
 
     // 🎮 UI Controls
@@ -569,14 +674,18 @@
         elements.toggleBtn.style.visibility = "hidden";
         elements.toggleBtn.style.pointerEvents = "none";
         requestAnimationFrame(() => {
-          elements.panel.classList.add("show");
+          requestAnimationFrame(() => {
+            elements.panel.classList.add("show");
+          });
         });
       } else {
         elements.panel.classList.remove("show");
+        // Show button immediately when closing
+        elements.toggleBtn.style.visibility = "visible";
+        elements.toggleBtn.style.pointerEvents = "auto";
+        // Hide panel after animation completes
         setTimeout(() => {
           elements.panel.style.display = "none";
-          elements.toggleBtn.style.visibility = "visible";
-          elements.toggleBtn.style.pointerEvents = "auto";
         }, 200);
       }
     };
@@ -584,25 +693,11 @@
     elements.toggleBtn.onclick = () => togglePanel(true);
     elements.closeBtn.onclick = () => togglePanel(false);
 
-    // Debug toggle in footer
-    elements.debugToggle.onclick = () => {
-      DEBUG = !DEBUG;
-      state.debugMode = DEBUG;
-      storage.set("tg_debug_mode", DEBUG);
-      elements.debugStatus.textContent = DEBUG ? "ON" : "OFF";
-      log.info(`Debug mode ${DEBUG ? "enabled" : "disabled"}`);
-      showNotification(`🐛 Debug ${DEBUG ? "ON" : "OFF"}`);
-    };
-
     // ⌨️ Keyboard Shortcuts
     document.addEventListener("keydown", (e) => {
       if (e.altKey && e.key.toLowerCase() === "t") {
         e.preventDefault();
         togglePanel(elements.panel.style.display !== "block");
-      }
-      if (e.altKey && e.key.toLowerCase() === "r") {
-        e.preventDefault();
-        refreshTranslations();
       }
       if (e.key === "Escape" && elements.panel.style.display === "block") {
         togglePanel(false);
@@ -628,12 +723,26 @@
       };
     };
 
-    createSettingHandler("targetLang", elements.langSelect);
-    createSettingHandler("sourceLang", elements.sourceLangSelect);
-    createSettingHandler("enabled", elements.enableInput, true, () => {
-      state.enabled ? refreshTranslations() : removeAllTranslations();
+    // Auto-enable Skip Same Language
+    state.skipSameLang = true;
+    elements.skipSameLangInput.checked = true;
+    storage.set("tg_skip_same_lang", "true");
+
+    // Auto set source to auto
+    state.sourceLang = "auto";
+    elements.sourceLangSelect.value = "auto";
+    storage.set("tg_source_lang", "auto");
+
+    createSettingHandler("targetLang", elements.langSelect, false, () => {
+      if (state.enabled) refreshTranslations();
     });
-    createSettingHandler("skipSameLang", elements.skipSameLangInput, true);
+    createSettingHandler("enabled", elements.enableInput, true, () => {
+      if (state.enabled) {
+        refreshTranslations();
+      } else {
+        removeAllTranslations();
+      }
+    });
 
     // 💾 Cache Management
     const translateCache = new Map();
@@ -644,8 +753,6 @@
       }
       translateCache.set(key, value);
     };
-
-    elements.refreshBtn.onclick = () => refreshTranslations();
 
     // 🔍 Text Validation
     const shouldSkipText = (text) => {
@@ -834,11 +941,14 @@
       const messageId = getMessageId(msgElement);
       if (!messageId) return;
 
-      if (translationPersistCache.has(messageId)) {
-        const cached = translationPersistCache.get(messageId);
+      // Cache key includes target language
+      const cacheKey = `${messageId}:${state.targetLang}`;
+
+      if (translationPersistCache.has(cacheKey)) {
+        const cached = translationPersistCache.get(cacheKey);
         renderTranslation(msgElement, cached);
         updateStats();
-        log.info(`✓ Restored [${messageId}]`);
+        log.info(`✓ Restored [${messageId}] (${state.targetLang})`);
         return;
       }
 
@@ -846,10 +956,11 @@
 
       const translated = await translateText(text);
       if (translated && translated !== text) {
-        translationPersistCache.set(messageId, translated);
+        translationPersistCache.set(cacheKey, translated);
+        savePersistCache(translationPersistCache); // Save to localStorage
         renderTranslation(msgElement, translated);
         updateStats();
-        log.info(`✓ Translated [${messageId}]`);
+        log.info(`✓ Translated [${messageId}] → ${state.targetLang}`);
       }
     };
 
@@ -882,19 +993,28 @@
           const messageId = getMessageId(msg);
           if (!messageId) continue;
 
-          if (translationPersistCache.has(messageId)) {
-            renderTranslation(msg, translationPersistCache.get(messageId));
+          // Cache key includes target language
+          const cacheKey = `${messageId}:${state.targetLang}`;
+
+          if (translationPersistCache.has(cacheKey)) {
+            renderTranslation(msg, translationPersistCache.get(cacheKey));
             restored++;
           } else {
             const translated = await translateText(text);
             if (translated && translated !== text) {
-              translationPersistCache.set(messageId, translated);
+              translationPersistCache.set(cacheKey, translated);
               renderTranslation(msg, translated);
               processed++;
             }
           }
         }
         await new Promise((r) => setTimeout(r, 50));
+      }
+
+      // Save all new translations to localStorage
+      if (processed > 0) {
+        savePersistCache(translationPersistCache);
+        log.info(`✓ Saved ${processed} new translations to localStorage`);
       }
 
       log.info(`Done: ${processed} new, ${restored} cached`);
