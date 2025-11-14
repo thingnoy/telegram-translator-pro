@@ -43,3 +43,18 @@ yarn-error.log*
 # Node (if you add any build tools later)
 node_modules/
 dist/
+build/
+
+# Userscript build artifacts
+*.min.js
+*.user.js.zip
+*.tampermonkey.js
+
+# Development files
+dev/
+development/
+*.dev.js
+
+# Documentation build
+docs/build/
+site/
