@@ -1,4 +1,10 @@
-# 🌐 Telegram Translator Pro
+# 🌐 Telegram Tools Collection
+
+A collection of advanced userscripts for Telegram Web to enhance your messaging experience.
+
+## 📜 Available Scripts
+
+### 🌐 Telegram Translator Pro
 
 Advanced real-time translation userscript for Telegram Web with beautiful Liquid Glass UI, intelligent caching, and instant language switching.
 
@@ -154,15 +160,36 @@ MIT License - See [LICENSE](LICENSE) file for details
 
 **sadoi**
 
+- **GitHub**: [github.com/sadoi](https://github.com/sadoi)
+- **Project**: [Telegram Tools Collection](https://github.com/sadoi/telegram-tools)
+
 ## 🙏 Acknowledgments
 
 - Google Translate API for translation services
 - Telegram Web for the awesome platform
 - Violentmonkey/Tampermonkey for userscript support
+- Liquid Glass UI design inspired by modern iOS aesthetics
 
 ## 📝 Changelog
 
-### Version 3.0 - Liquid Glass (Current)
+### 🛡️ Telegram Ad Filter Pro
+
+#### Version 2.0 - Liquid Glass (Current)
+- 🌊 Complete redesign with beautiful Liquid Glass UI matching Translator Pro
+- 🎯 Smart message filtering with blur effects and reveal badges
+- ⚡ Real-time processing with optimized mutation observers
+- 📊 Live statistics showing daily and total filtered counts
+- ⚙️ Intuitive control panel with toggle switches
+- ⌨️ Keyboard shortcut support (Alt+F)
+- 💾 Persistent settings and custom word lists
+- 🎨 Smooth animations and micro-interactions
+- 🚫 One-click reveal functionality for filtered messages
+- 🔄 Daily statistics reset
+- ⚡ Performance optimized with debounced processing
+
+### 🌐 Telegram Translator Pro
+
+#### Version 3.0 - Liquid Glass (Current)
 - 🌊 Complete redesign with beautiful Liquid Glass UI (iOS-style frosted glass effect)
 - ⚡ Instant language switching - automatically retranslates all messages when language changes
 - 💾 Language-specific persistent cache (`messageId:targetLang` format)
@@ -173,18 +200,62 @@ MIT License - See [LICENSE](LICENSE) file for details
 - 🚀 Optimized blur (20px) for better clarity and performance
 - ✨ Brighter cyan color scheme (#00d4ff) for better visibility
 
-### Version 2.0 - iOS Glass Style
+#### Version 2.0 - iOS Glass Style
 - Complete UI redesign with modern dark gradient theme
 - Improved animations and transitions
 - Enhanced visual hierarchy
 
-### Version 1.4
+#### Version 1.4
 - Fixed Telegram Web K structure detection
 - Improved data-mid caching system
 - Enhanced virtual scrolling support
 - Better message ID tracking
 - Optimized performance
 
+#### ✨ Features
+
+- **🌊 Liquid Glass UI**: Stunning frosted glass design matching the Translator Pro aesthetic
+- **🎯 Smart Message Filtering**: Automatically blurs and hides advertisement messages with beautiful animations
+- **⚡ Real-time Processing**: Filters messages instantly as they appear
+- **📊 Live Statistics**: Track filtered messages with daily and total counters
+- **🎨 Visual Feedback**: Filtered messages show with blur effect and reveal badge
+- **⚙️ Easy Configuration**: Intuitive panel with toggle switches and word management
+- **⌨️ Keyboard Shortcuts**: Quick access with Alt+F
+- **💾 Persistent Settings**: Your preferences and custom words are saved automatically
+- **🔄 One-click Reveal**: Click the 🚫 badge to unhide any filtered message
+
+#### 🎮 Usage
+
+**Opening the Control Panel**
+- Click the floating **🛡️** button in the bottom-right corner (above the translator button)
+- Or press **Alt+F** on your keyboard
+
+**Quick Start**
+1. **Toggle Filtering**: Use the main switch to enable/disable filtering
+2. **Custom Words**: Add your own blocked words/phrases (one per line)
+3. **View Stats**: See how many ads have been filtered today and in total
+4. **Reveal Messages**: Click the 🚫 badge on any filtered message to show it
+
+**Visual Indicators**
+- **Filtered messages** appear blurred with reduced opacity
+- **🛡️ Button** shows filter count badge and changes color when enabled
+- **🚫 Badge** appears on filtered messages for easy reveal
+
+#### 🔧 Customization
+
+Add your own blocked words and phrases:
+- One word or phrase per line
+- Case-insensitive matching
+- Matches both message text and links
+- Default list includes common advertisement terms
+
+#### ⚡ Performance
+
+- Optimized mutation observers for real-time filtering
+- Debounced processing to prevent lag
+- Efficient CSS-based visual effects
+- Minimal impact on page performance
+
 ---
 
-**Note**: This is a community-developed tool and is not officially affiliated with Telegram.
+**Note**: These are community-developed tools and are not officially affiliated with Telegram.
