@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Telegram Ad Filter Pro
-// @version      2.2.0
-// @description  Beautiful ad filtering with multiple filter modes and Liquid Glass UI
+// @version      2.3.0
+// @description  Beautiful ad filtering with multiple filter modes, debug mode, and Liquid Glass UI
 // @license      MIT
 // @author       sadoi
 // @icon         https://web.telegram.org/favicon.ico
@@ -34,6 +34,12 @@
       name: "Collapse",
       icon: "📦",
       description: "Collapse messages to thin bars",
+    },
+    DEBUG: {
+      id: "debug",
+      name: "Debug Mode",
+      icon: "🔍",
+      description: "Highlight matched words for debugging",
     },
   };
 
@@ -167,6 +173,27 @@
 
         .tgaf-filtered-message.mode-collapse.revealed .tgaf-collapse-bar {
             display: none !important;
+        }
+
+        /* Mode 3: Debug */
+        .tgaf-filtered-message.mode-debug {
+            opacity: 1;
+            filter: none;
+            border: 2px solid rgba(255, 149, 0, 0.5);
+            background: rgba(255, 149, 0, 0.05);
+            border-radius: 12px;
+            padding: 8px;
+            margin: 4px 0;
+        }
+
+        .tgaf-filtered-message.mode-debug .tgaf-highlight {
+            background: linear-gradient(135deg, rgba(255, 59, 48, 0.3) 0%, rgba(255, 149, 0, 0.3) 100%);
+            color: #ff3b30;
+            font-weight: 600;
+            padding: 2px 4px;
+            border-radius: 4px;
+            border-bottom: 2px solid #ff9500;
+            box-shadow: 0 2px 4px rgba(255, 59, 48, 0.2);
         }
 
         /* Filter Badge (for all modes) */
@@ -761,25 +788,123 @@
     filteredMessages.has(messageId) &&
     !revealedMessages.has(messageId);
 
+  // Highlight matched words in debug mode
+  function highlightMatchedWords(element, matchedWords) {
+    if (!element || !matchedWords || matchedWords.length === 0) return;
+
+    // Create a Set of lowercase words for faster lookup
+    const wordsSet = new Set(matchedWords.map(w => w.toLowerCase()));
+
+    // Function to highlight text in a text node
+    function highlightTextNode(textNode) {
+      const text = textNode.textContent;
+      const lowerText = text.toLowerCase();
+
+      // Find all matches
+      const matches = [];
+      wordsSet.forEach(word => {
+        let index = lowerText.indexOf(word);
+        while (index !== -1) {
+          matches.push({ index, length: word.length, word });
+          index = lowerText.indexOf(word, index + 1);
+        }
+      });
+
+      // Sort matches by index
+      matches.sort((a, b) => a.index - b.index);
+
+      // If no matches, return
+      if (matches.length === 0) return;
+
+      // Create a document fragment with highlighted text
+      const fragment = document.createDocumentFragment();
+      let lastIndex = 0;
+
+      matches.forEach(match => {
+        // Add text before match
+        if (match.index > lastIndex) {
+          fragment.appendChild(
+            document.createTextNode(text.substring(lastIndex, match.index))
+          );
+        }
+
+        // Add highlighted match
+        const highlight = document.createElement('span');
+        highlight.className = 'tgaf-highlight';
+        highlight.textContent = text.substring(match.index, match.index + match.length);
+        fragment.appendChild(highlight);
+
+        lastIndex = match.index + match.length;
+      });
+
+      // Add remaining text
+      if (lastIndex < text.length) {
+        fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+      }
+
+      // Replace text node with fragment
+      textNode.parentNode.replaceChild(fragment, textNode);
+    }
+
+    // Walk through all text nodes
+    const walker = document.createTreeWalker(
+      element,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: function(node) {
+          // Skip script, style, and already highlighted nodes
+          const parent = node.parentElement;
+          if (parent && (
+            parent.tagName === 'SCRIPT' ||
+            parent.tagName === 'STYLE' ||
+            parent.classList.contains('tgaf-highlight') ||
+            parent.classList.contains('tgaf-filter-badge') ||
+            parent.classList.contains('tgaf-collapse-bar')
+          )) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      }
+    );
+
+    const textNodes = [];
+    let node;
+    while (node = walker.nextNode()) {
+      if (node.textContent.trim()) {
+        textNodes.push(node);
+      }
+    }
+
+    // Highlight all text nodes
+    textNodes.forEach(highlightTextNode);
+  }
+
   // Filter functions
   const shouldFilterMessage = (messageElement) => {
-    if (!isEnabled || !messageElement) return false;
+    if (!isEnabled || !messageElement) return { shouldFilter: false, matchedWords: [] };
 
     const text = (messageElement.textContent || "").toLowerCase();
     const links = Array.from(messageElement.querySelectorAll("a")).map((a) =>
       a.href.toLowerCase()
     );
 
-    return customWords.some((word) => {
+    const matchedWords = [];
+
+    customWords.forEach((word) => {
       const lowerWord = word.toLowerCase();
-      return (
-        text.includes(lowerWord) ||
-        links.some((link) => link.includes(lowerWord))
-      );
+      if (text.includes(lowerWord) || links.some((link) => link.includes(lowerWord))) {
+        matchedWords.push(word);
+      }
     });
+
+    return {
+      shouldFilter: matchedWords.length > 0,
+      matchedWords
+    };
   };
 
-  function filterMessage(messageElement) {
+  function filterMessage(messageElement, matchedWords = []) {
     const messageId = getMessageId(messageElement);
 
     // Check if this message was previously filtered and revealed
@@ -800,7 +925,20 @@
       }
 
       // Add mode-specific elements
-      if (currentMode === "collapse") {
+      if (currentMode === "debug") {
+        // Debug mode - highlight matched words
+        highlightMatchedWords(messageElement, matchedWords);
+
+        // Add debug badge showing matched words
+        const badge = document.createElement("div");
+        badge.className = "tgaf-filter-badge";
+        badge.textContent = `🔍 ${matchedWords.length} match${matchedWords.length > 1 ? 'es' : ''}`;
+        badge.title = `Matched words: ${matchedWords.join(', ')}`;
+        badge.style.cursor = "help";
+
+        messageElement.style.position = "relative";
+        messageElement.appendChild(badge);
+      } else if (currentMode === "collapse") {
         const collapseBar = document.createElement("div");
         collapseBar.className = "tgaf-collapse-bar";
         collapseBar.innerHTML = `🚫 Advertisement (${messageElement.textContent.length} chars) - Click to expand`;
@@ -849,10 +987,14 @@
       // Check if this message was previously filtered
       if (messageId && isMessageFiltered(messageId)) {
         // Apply filtering to previously filtered message
-        filterMessage(message);
-      } else if (shouldFilterMessage(message)) {
+        const result = shouldFilterMessage(message);
+        filterMessage(message, result.matchedWords);
+      } else {
         // Check if it should be filtered now
-        filterMessage(message);
+        const result = shouldFilterMessage(message);
+        if (result.shouldFilter) {
+          filterMessage(message, result.matchedWords);
+        }
       }
     });
   }
@@ -873,6 +1015,13 @@
       // Remove filter-specific elements
       message.querySelectorAll(".tgaf-filter-badge, .tgaf-collapse-bar, .tgaf-slide-tab")
         .forEach(el => el.remove());
+
+      // Remove highlights from debug mode
+      message.querySelectorAll(".tgaf-highlight").forEach(highlight => {
+        const text = highlight.textContent;
+        const textNode = document.createTextNode(text);
+        highlight.parentNode.replaceChild(textNode, highlight);
+      });
 
       // Remove data attributes
       message.removeAttribute("data-filter-id");
@@ -1132,6 +1281,14 @@
           ".tgaf-filter-badge, .tgaf-collapse-bar, .tgaf-slide-tab"
         )
         .forEach((el) => el.remove());
+
+      // Remove highlights from debug mode
+      msg.querySelectorAll(".tgaf-highlight").forEach(highlight => {
+        const text = highlight.textContent;
+        const textNode = document.createTextNode(text);
+        highlight.parentNode.replaceChild(textNode, highlight);
+      });
+
       msg.removeAttribute("data-filter-id");
     });
 
