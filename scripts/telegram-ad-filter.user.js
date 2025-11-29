@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Telegram Ad Filter Pro
-// @version      2.3.0
-// @description  Beautiful ad filtering with multiple filter modes, debug mode, and Liquid Glass UI
+// @version      2.5.0
+// @description  Beautiful ad filtering with enhanced debug mode, word boundary matching, and Liquid Glass UI
 // @license      MIT
 // @author       sadoi
 // @icon         https://web.telegram.org/favicon.ico
@@ -85,6 +85,7 @@
   let isEnabled = true;
   let currentMode = "blur"; // Default mode
   let customWords = [];
+  let useWordBoundary = true; // Use word boundary matching by default
   let filteredCount = 0;
   let filterStats = { today: 0, total: 0 };
   let isPanelOpen = false;
@@ -656,6 +657,7 @@
       isEnabled = settings.enabled !== false;
       currentMode = settings.mode || "blur";
       customWords = settings.customWords || [...CONFIG.defaultBlacklist];
+      useWordBoundary = settings.useWordBoundary !== false; // Default to true
       filterStats = settings.stats || { today: 0, total: 0 };
 
       // Load filtered messages from localStorage
@@ -668,6 +670,7 @@
       isEnabled = true;
       currentMode = "blur";
       customWords = [...CONFIG.defaultBlacklist];
+      useWordBoundary = true;
       filterStats = { today: 0, total: 0 };
     }
   }
@@ -678,6 +681,7 @@
         enabled: isEnabled,
         mode: currentMode,
         customWords: customWords,
+        useWordBoundary: useWordBoundary,
         stats: filterStats,
         lastUpdated: new Date().toISOString(),
       };
@@ -890,21 +894,65 @@
     );
 
     const matchedWords = [];
+    const debugInfo = []; // Store debug info
 
     customWords.forEach((word) => {
       const lowerWord = word.toLowerCase();
-      if (text.includes(lowerWord) || links.some((link) => link.includes(lowerWord))) {
+      let isMatch = false;
+      let matchLocation = '';
+
+      if (useWordBoundary) {
+        // Use word boundary matching - match whole words only
+        // Escape special regex characters
+        const escapedWord = lowerWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Create regex with word boundaries
+        const regex = new RegExp(`\\b${escapedWord}\\b`, 'i');
+
+        if (regex.test(text)) {
+          isMatch = true;
+          matchLocation = 'text';
+        } else {
+          const matchedLink = links.find((link) => regex.test(link));
+          if (matchedLink) {
+            isMatch = true;
+            matchLocation = `link: ${matchedLink.substring(0, 100)}...`;
+          }
+        }
+      } else {
+        // Use substring matching (old behavior)
+        if (text.includes(lowerWord)) {
+          isMatch = true;
+          matchLocation = 'text (substring)';
+        } else {
+          const matchedLink = links.find((link) => link.includes(lowerWord));
+          if (matchedLink) {
+            isMatch = true;
+            matchLocation = `link (substring): ${matchedLink.substring(0, 100)}...`;
+          }
+        }
+      }
+
+      if (isMatch) {
         matchedWords.push(word);
+        debugInfo.push({ word, location: matchLocation });
       }
     });
 
+    // Log debug info if in debug mode
+    if (currentMode === 'debug' && matchedWords.length > 0) {
+      console.log('[Ad Filter Debug] Matches found:', debugInfo);
+      console.log('[Ad Filter Debug] Text preview:', text.substring(0, 200));
+      console.log('[Ad Filter Debug] Links:', links);
+    }
+
     return {
       shouldFilter: matchedWords.length > 0,
-      matchedWords
+      matchedWords,
+      debugInfo
     };
   };
 
-  function filterMessage(messageElement, matchedWords = []) {
+  function filterMessage(messageElement, matchedWords = [], debugInfo = []) {
     const messageId = getMessageId(messageElement);
 
     // Check if this message was previously filtered and revealed
@@ -929,12 +977,32 @@
         // Debug mode - highlight matched words
         highlightMatchedWords(messageElement, matchedWords);
 
-        // Add debug badge showing matched words
+        // Add debug badge showing matched words and locations
         const badge = document.createElement("div");
         badge.className = "tgaf-filter-badge";
         badge.textContent = `🔍 ${matchedWords.length} match${matchedWords.length > 1 ? 'es' : ''}`;
-        badge.title = `Matched words: ${matchedWords.join(', ')}`;
+
+        // Create detailed tooltip
+        let tooltip = `Matched words:\n`;
+        if (debugInfo && debugInfo.length > 0) {
+          debugInfo.forEach(info => {
+            tooltip += `• "${info.word}" in ${info.location}\n`;
+          });
+        } else {
+          tooltip += matchedWords.join(', ');
+        }
+        badge.title = tooltip;
         badge.style.cursor = "help";
+
+        // Click to see console log
+        badge.addEventListener("click", (e) => {
+          e.stopPropagation();
+          console.log('[Ad Filter Debug] Message details:');
+          console.log('Matched words:', matchedWords);
+          console.log('Match locations:', debugInfo);
+          console.log('Message text:', messageElement.textContent?.substring(0, 500));
+          console.log('Message links:', Array.from(messageElement.querySelectorAll("a")).map(a => a.href));
+        });
 
         messageElement.style.position = "relative";
         messageElement.appendChild(badge);
@@ -988,12 +1056,12 @@
       if (messageId && isMessageFiltered(messageId)) {
         // Apply filtering to previously filtered message
         const result = shouldFilterMessage(message);
-        filterMessage(message, result.matchedWords);
+        filterMessage(message, result.matchedWords, result.debugInfo);
       } else {
         // Check if it should be filtered now
         const result = shouldFilterMessage(message);
         if (result.shouldFilter) {
-          filterMessage(message, result.matchedWords);
+          filterMessage(message, result.matchedWords, result.debugInfo);
         }
       }
     });
@@ -1111,6 +1179,18 @@
                 </div>
 
                 <div class="tgaf-section">
+                    <div class="tgaf-toggle-switch" id="tgaf-word-boundary-toggle">
+                        <span class="tgaf-toggle-label">Match Whole Words Only</span>
+                        <div class="tgaf-switch ${useWordBoundary ? "active" : ""}">
+                            <div class="tgaf-switch-handle"></div>
+                        </div>
+                    </div>
+                    <div style="color: rgba(255, 255, 255, 0.5); font-size: 11px; margin-top: 8px; line-height: 1.4;">
+                        When enabled, "ad" matches only "ad", not "read" or "loading". Recommended to avoid false positives.
+                    </div>
+                </div>
+
+                <div class="tgaf-section">
                     <div class="tgaf-section-title">Filter Statistics</div>
                     <div class="tgaf-stats-grid">
                         <div class="tgaf-stat-card">
@@ -1187,7 +1267,7 @@
     // Add event listener to both the toggle switch and its container
     const toggleContainer = filterPanel.querySelector(".tgaf-toggle-switch");
 
-    elements.toggleSwitch.addEventListener("click", (e) => {
+    elements.toggleSwitch.addEventListener("click", () => {
       console.log("[Ad Filter] Toggle clicked, current state:", isEnabled);
       isEnabled = !isEnabled;
       elements.toggleSwitch.classList.toggle("active", isEnabled);
@@ -1225,6 +1305,25 @@
         saveSettings();
         reprocessMessages();
       });
+    });
+
+    // Word boundary toggle
+    const wordBoundaryToggle = filterPanel.querySelector("#tgaf-word-boundary-toggle");
+    const wordBoundarySwitch = wordBoundaryToggle.querySelector(".tgaf-switch");
+
+    wordBoundarySwitch.addEventListener("click", (e) => {
+      e.stopPropagation();
+      useWordBoundary = !useWordBoundary;
+      wordBoundarySwitch.classList.toggle("active", useWordBoundary);
+      saveSettings();
+      reprocessMessages();
+      console.log("[Ad Filter] Word boundary matching:", useWordBoundary);
+    });
+
+    wordBoundaryToggle.addEventListener("click", (e) => {
+      if (e.target !== wordBoundarySwitch && !wordBoundarySwitch.contains(e.target)) {
+        wordBoundarySwitch.click();
+      }
     });
 
     elements.saveBtn.addEventListener("click", () => {
