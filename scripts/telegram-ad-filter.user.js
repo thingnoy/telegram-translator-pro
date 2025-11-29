@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Telegram Ad Filter Pro
-// @version      2.5.0
-// @description  Beautiful ad filtering with enhanced debug mode, word boundary matching, and Liquid Glass UI
+// @version      3.2.3
+// @description  Beautiful ad filtering with enhanced debug info panel, word boundary matching (with non-ASCII support), and clean UI
 // @license      MIT
 // @author       sadoi
 // @icon         https://web.telegram.org/favicon.ico
@@ -176,25 +176,108 @@
             display: none !important;
         }
 
-        /* Mode 3: Debug */
+        /* Mode 3: Debug - Minimal Design */
         .tgaf-filtered-message.mode-debug {
             opacity: 1;
             filter: none;
-            border: 2px solid rgba(255, 149, 0, 0.5);
-            background: rgba(255, 149, 0, 0.05);
-            border-radius: 12px;
-            padding: 8px;
-            margin: 4px 0;
+            border-left: 2px solid rgba(255, 149, 0, 0.4);
+            background: transparent;
+            position: relative;
+            transition: all 0.2s ease;
         }
 
+        .tgaf-filtered-message.mode-debug:hover {
+            background: rgba(255, 149, 0, 0.05);
+            border-left-color: rgba(255, 149, 0, 0.6);
+        }
+
+        /* Subtle Highlight */
         .tgaf-filtered-message.mode-debug .tgaf-highlight {
-            background: linear-gradient(135deg, rgba(255, 59, 48, 0.3) 0%, rgba(255, 149, 0, 0.3) 100%);
-            color: #ff3b30;
+            background: rgba(255, 149, 0, 0.15);
+            color: #ff6b00;
             font-weight: 600;
             padding: 2px 4px;
+            border-radius: 3px;
+            border-bottom: 1px solid rgba(255, 149, 0, 0.4);
+        }
+
+        /* Simple Debug Badge */
+        .tgaf-debug-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(255, 149, 0, 0.08);
+            border: 1px solid rgba(255, 149, 0, 0.25);
             border-radius: 4px;
-            border-bottom: 2px solid #ff9500;
-            box-shadow: 0 2px 4px rgba(255, 59, 48, 0.2);
+            padding: 2px 6px;
+            font-size: 10px;
+            color: #ff9500;
+            margin-right: 6px;
+            margin-bottom: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            vertical-align: middle;
+        }
+
+        .tgaf-debug-badge:hover {
+            background: rgba(255, 149, 0, 0.12);
+            border-color: rgba(255, 149, 0, 0.4);
+        }
+
+        .tgaf-debug-badge-icon {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        .tgaf-debug-badge-word {
+            background: rgba(255, 149, 0, 0.15);
+            padding: 1px 4px;
+            border-radius: 2px;
+            font-weight: 600;
+            font-size: 10px;
+        }
+
+        /* Compact Debug Info Panel */
+        .tgaf-debug-info {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 8px;
+            margin: 2px 0 4px 0;
+            background: rgba(255, 149, 0, 0.06);
+            border: 1px solid rgba(255, 149, 0, 0.15);
+            border-radius: 4px;
+            font-size: 10px;
+            color: rgba(255, 149, 0, 0.95);
+            flex-wrap: wrap;
+            line-height: 1.4;
+        }
+
+        .tgaf-debug-info-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            white-space: nowrap;
+        }
+
+        .tgaf-debug-info-label {
+            opacity: 0.75;
+            font-weight: 500;
+        }
+
+        .tgaf-debug-info-value {
+            font-weight: 700;
+            background: rgba(255, 149, 0, 0.15);
+            padding: 1px 5px;
+            border-radius: 3px;
+            color: #ff6b00;
+        }
+
+        .tgaf-debug-info-sep {
+            opacity: 0.25;
+            margin: 0 1px;
+            font-weight: 300;
         }
 
         /* Filter Badge (for all modes) */
@@ -796,6 +879,11 @@
   function highlightMatchedWords(element, matchedWords) {
     if (!element || !matchedWords || matchedWords.length === 0) return;
 
+    // Check if already highlighted
+    if (element.querySelector('.tgaf-highlight')) {
+      return; // Already highlighted
+    }
+
     // Create a Set of lowercase words for faster lookup
     const wordsSet = new Set(matchedWords.map(w => w.toLowerCase()));
 
@@ -902,20 +990,39 @@
       let matchLocation = '';
 
       if (useWordBoundary) {
-        // Use word boundary matching - match whole words only
-        // Escape special regex characters
-        const escapedWord = lowerWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        // Create regex with word boundaries
-        const regex = new RegExp(`\\b${escapedWord}\\b`, 'i');
+        // Check if word contains non-ASCII characters
+        // \b word boundary doesn't work with non-ASCII (Chinese, Thai, Arabic, etc.)
+        const hasNonASCII = /[^\x00-\x7F]/.test(lowerWord);
 
-        if (regex.test(text)) {
-          isMatch = true;
-          matchLocation = 'text';
-        } else {
-          const matchedLink = links.find((link) => regex.test(link));
-          if (matchedLink) {
+        if (hasNonASCII) {
+          // For non-ASCII words, use substring matching
+          // because \b only works with [a-zA-Z0-9_]
+          if (text.includes(lowerWord)) {
             isMatch = true;
-            matchLocation = `link: ${matchedLink.substring(0, 100)}...`;
+            matchLocation = 'text';
+          } else {
+            const matchedLink = links.find((link) => link.includes(lowerWord));
+            if (matchedLink) {
+              isMatch = true;
+              matchLocation = `link: ${matchedLink.substring(0, 100)}...`;
+            }
+          }
+        } else {
+          // For ASCII words, use word boundary matching - match whole words only
+          // Escape special regex characters
+          const escapedWord = lowerWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          // Create regex with word boundaries
+          const regex = new RegExp(`\\b${escapedWord}\\b`, 'i');
+
+          if (regex.test(text)) {
+            isMatch = true;
+            matchLocation = 'text';
+          } else {
+            const matchedLink = links.find((link) => regex.test(link));
+            if (matchedLink) {
+              isMatch = true;
+              matchLocation = `link: ${matchedLink.substring(0, 100)}...`;
+            }
           }
         }
       } else {
@@ -938,11 +1045,9 @@
       }
     });
 
-    // Log debug info if in debug mode
-    if (currentMode === 'debug' && matchedWords.length > 0) {
-      console.log('[Ad Filter Debug] Matches found:', debugInfo);
-      console.log('[Ad Filter Debug] Text preview:', text.substring(0, 200));
-      console.log('[Ad Filter Debug] Links:', links);
+    // Debug: Log if matches found but no location info
+    if (matchedWords.length > 0 && debugInfo.length === 0) {
+      console.warn('[Ad Filter] Matches found but no debug info:', matchedWords);
     }
 
     return {
@@ -974,38 +1079,145 @@
 
       // Add mode-specific elements
       if (currentMode === "debug") {
+        // Check if already has debug elements
+        if (messageElement.querySelector('.tgaf-debug-badge') || messageElement.querySelector('.tgaf-debug-info')) {
+          return; // Already processed
+        }
+
         // Debug mode - highlight matched words
         highlightMatchedWords(messageElement, matchedWords);
 
-        // Add debug badge showing matched words and locations
-        const badge = document.createElement("div");
-        badge.className = "tgaf-filter-badge";
-        badge.textContent = `🔍 ${matchedWords.length} match${matchedWords.length > 1 ? 'es' : ''}`;
+        // Ensure debugInfo is valid (early declaration)
+        const validDebugInfo = debugInfo && Array.isArray(debugInfo) ? debugInfo : [];
 
-        // Create detailed tooltip
-        let tooltip = `Matched words:\n`;
-        if (debugInfo && debugInfo.length > 0) {
-          debugInfo.forEach(info => {
-            tooltip += `• "${info.word}" in ${info.location}\n`;
-          });
-        } else {
-          tooltip += matchedWords.join(', ');
-        }
-        badge.title = tooltip;
-        badge.style.cursor = "help";
+        // Create simple badge showing matched words
+        const badge = document.createElement("span");
+        badge.className = "tgaf-debug-badge";
 
-        // Click to see console log
-        badge.addEventListener("click", (e) => {
-          e.stopPropagation();
-          console.log('[Ad Filter Debug] Message details:');
-          console.log('Matched words:', matchedWords);
-          console.log('Match locations:', debugInfo);
-          console.log('Message text:', messageElement.textContent?.substring(0, 500));
-          console.log('Message links:', Array.from(messageElement.querySelectorAll("a")).map(a => a.href));
+        // Create badge content
+        let badgeHTML = `<span class="tgaf-debug-badge-icon">🔍</span>`;
+
+        // Show matched words (max 3)
+        const displayWords = matchedWords.slice(0, 3);
+        displayWords.forEach(word => {
+          badgeHTML += `<span class="tgaf-debug-badge-word">${word}</span>`;
         });
 
-        messageElement.style.position = "relative";
-        messageElement.appendChild(badge);
+        // If more than 3, show count
+        if (matchedWords.length > 3) {
+          badgeHTML += `<span>+${matchedWords.length - 3}</span>`;
+        }
+
+        badge.innerHTML = badgeHTML;
+
+        // Add tooltip with full info
+        let tooltip = `Matched: ${matchedWords.join(', ')}`;
+        if (validDebugInfo && validDebugInfo.length > 0) {
+          tooltip += '\n\nLocations:';
+          validDebugInfo.forEach(info => {
+            if (info && info.location && info.word) {
+              const loc = info.location.includes('link') ? 'in link' : 'in text';
+              tooltip += `\n• ${info.word} ${loc}`;
+            }
+          });
+        }
+        tooltip += '\n\n💡 Click to log details';
+        badge.title = tooltip;
+
+        // Click to log details
+        badge.addEventListener("click", (e) => {
+          e.stopPropagation();
+          console.group('🔍 Ad Filter Debug Info');
+          console.log('Matched Words:', matchedWords);
+          console.log('Debug Info:', validDebugInfo);
+          console.table(validDebugInfo);
+          console.log('Total Matches:', totalMatches);
+          console.log('Text Matches:', textMatches, 'Link Matches:', linkMatches);
+          console.log('Message Preview:', messageElement.textContent?.substring(0, 300));
+          console.log('All Links:', Array.from(messageElement.querySelectorAll('a')).map(a => a.href));
+          console.log('Word Boundary Mode:', useWordBoundary ? 'Whole Word' : 'Substring');
+          console.groupEnd();
+
+          // Visual feedback
+          badge.style.background = 'rgba(52, 199, 89, 0.15)';
+          badge.style.borderColor = 'rgba(52, 199, 89, 0.4)';
+          setTimeout(() => {
+            badge.style.background = '';
+            badge.style.borderColor = '';
+          }, 300);
+        });
+
+        badge.style.cursor = "pointer";
+
+        // Find the message content container (usually .message inside .bubble)
+        const messageContent = messageElement.querySelector('.message') || messageElement;
+
+        // Insert badge at the beginning of message content
+        messageContent.insertBefore(badge, messageContent.firstChild);
+
+        // Create compact info panel
+        const infoPanel = document.createElement("div");
+        infoPanel.className = "tgaf-debug-info";
+
+        // Count matches by location type (validDebugInfo already defined above)
+        let textMatches = 0;
+        let linkMatches = 0;
+        validDebugInfo.forEach(info => {
+          if (info.location && info.location.includes('link')) {
+            linkMatches++;
+          } else {
+            textMatches++;
+          }
+        });
+
+        // Total matches (use debugInfo length if available, otherwise matchedWords)
+        const totalMatches = validDebugInfo.length > 0 ? validDebugInfo.length : matchedWords.length;
+
+        // Build info items
+        let infoParts = [];
+
+        // Match count
+        infoParts.push(`
+          <span class="tgaf-debug-info-item">
+            <span class="tgaf-debug-info-label">Matches:</span>
+            <span class="tgaf-debug-info-value">${totalMatches}</span>
+          </span>
+        `);
+
+        // Location breakdown
+        if (textMatches > 0) {
+          infoParts.push(`
+            <span class="tgaf-debug-info-sep">|</span>
+            <span class="tgaf-debug-info-item">
+              <span class="tgaf-debug-info-label">Text:</span>
+              <span class="tgaf-debug-info-value">${textMatches}</span>
+            </span>
+          `);
+        }
+        if (linkMatches > 0) {
+          infoParts.push(`
+            <span class="tgaf-debug-info-sep">|</span>
+            <span class="tgaf-debug-info-item">
+              <span class="tgaf-debug-info-label">Link:</span>
+              <span class="tgaf-debug-info-value">${linkMatches}</span>
+            </span>
+          `);
+        }
+
+        // Word boundary status
+        const boundaryStatus = useWordBoundary ? 'Whole Word' : 'Substring';
+        infoParts.push(`
+          <span class="tgaf-debug-info-sep">|</span>
+          <span class="tgaf-debug-info-item">
+            <span class="tgaf-debug-info-label">Mode:</span>
+            <span class="tgaf-debug-info-value">${boundaryStatus}</span>
+          </span>
+        `);
+
+        infoPanel.innerHTML = infoParts.join('');
+
+        // Insert info panel right after badge
+        badge.parentNode.insertBefore(infoPanel, badge.nextSibling);
       } else if (currentMode === "collapse") {
         const collapseBar = document.createElement("div");
         collapseBar.className = "tgaf-collapse-bar";
@@ -1047,9 +1259,19 @@
   }
 
   function processMessages() {
-    const messages = document.querySelectorAll(".bubble, .message");
+    const messages = document.querySelectorAll(".bubble");
 
     messages.forEach((message) => {
+      // Skip if already being processed or has filter elements
+      if (message.classList.contains("tgaf-filtered-message")) {
+        return; // Already filtered
+      }
+
+      // Skip if this is a child of another filtered message (avoid nested filtering)
+      if (message.closest('.tgaf-filtered-message')) {
+        return; // Parent already filtered
+      }
+
       const messageId = getMessageId(message);
 
       // Check if this message was previously filtered
@@ -1081,7 +1303,7 @@
       });
 
       // Remove filter-specific elements
-      message.querySelectorAll(".tgaf-filter-badge, .tgaf-collapse-bar, .tgaf-slide-tab")
+      message.querySelectorAll(".tgaf-filter-badge, .tgaf-collapse-bar, .tgaf-slide-tab, .tgaf-debug-badge, .tgaf-debug-info")
         .forEach(el => el.remove());
 
       // Remove highlights from debug mode
@@ -1377,7 +1599,7 @@
       );
       msg
         .querySelectorAll(
-          ".tgaf-filter-badge, .tgaf-collapse-bar, .tgaf-slide-tab"
+          ".tgaf-filter-badge, .tgaf-collapse-bar, .tgaf-slide-tab, .tgaf-debug-badge, .tgaf-debug-info"
         )
         .forEach((el) => el.remove());
 
@@ -1438,8 +1660,8 @@
           mutation.addedNodes.forEach((node) => {
             if (
               node.nodeType === Node.ELEMENT_NODE &&
-              (node.matches(".bubble, .message") ||
-                node.querySelector(".bubble, .message"))
+              (node.matches(".bubble") ||
+                node.querySelector(".bubble"))
             ) {
               shouldProcess = true;
             }
